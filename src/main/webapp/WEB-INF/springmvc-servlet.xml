@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+	http://www.springframework.org/schema/jdbc 
+	http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd
+    http://www.springframework.org/schema/tx 
+    http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+
+	<!-- 扫描带有元注解的包中的类，相等于声明了许多的Bean对象 -->
+	<context:component-scan base-package="com.accp.springmvc" />
+	
+	<!-- 启用事务的元注解 -->
+	<tx:annotation-driven/>
+	
+	<!-- 注解驱动 -->
+	<!-- <mvc:annotation-driven>
+		json日期格式处理转换【全局设置】
+		<mvc:message-converters>
+			<bean
+				class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<property name="objectMapper">
+					<bean class="com.fasterxml.jackson.databind.ObjectMapper">
+						<property name="dateFormat">
+							<bean class="java.text.SimpleDateFormat">
+								<constructor-arg type="java.lang.String" value="yyyy-MM-dd" />
+							</bean>
+						</property>
+					</bean>
+				</property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven> -->
+	 <mvc:annotation-driven>
+        <mvc:message-converters register-defaults="true">
+            <!-- 配置Fastjson支持 -->
+            <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>application/json</value>
+                    </list>
+                </property>
+                <property name="features">
+                    <list>
+                        <value>WriteMapNullValue</value>
+                        <value>QuoteFieldNames</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+	<!-- 1. 配置数据源 -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName">
+			<value>com.mysql.jdbc.Driver</value>
+		</property>
+		<property name="url">
+			<value>jdbc:mysql://localhost:3306/qq_email</value>
+		</property>
+		<property name="username">
+			<value>programmer</value>
+		</property>
+		<property name="password">
+			<value>123456</value>
+		</property>
+	</bean>
+
+	<!-- 2. 配置事务管理 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<!-- 视图解析 -->
+	<!-- <bean class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		返回的视图模型数据需要经过jstl来处理
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView" />
+		路径的前缀
+		<property name="prefix" value="/WEB-INF/" />
+		页面的后缀
+		<property name="suffix" value=".jsp" />
+	</bean> -->
+	
+	<!-- 忽略静态资源 -->
+	<mvc:default-servlet-handler />
+	
+	<!-- 5. 配置mybitasSqlSessionFactoryBean -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<!-- 配置别名路径 -->
+		<property name="typeAliasesPackage" value="com.accp.springmvc.pojo"></property>
+	</bean>
+	<!-- 6. 自动扫描所有的Dao[Mapper](和xml映射文件) ,自动创建所有的dao的实现类 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.accp.springmvc.mapper"></property>
+	</bean>
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<mvc:exclude-mapping path="/user/login"/>
+			<mvc:exclude-mapping path="/inframe/xlogin.html"/>
+			<mvc:exclude-mapping path="/kaptcha/*"/>
+			<mvc:exclude-mapping path="/images/*"/>
+			<mvc:exclude-mapping path="/js/*"/>
+			<mvc:exclude-mapping path="/css/*"/>
+			<bean class="com.accp.springmvc.interceptor.UserInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	<!-- google kaptcha的相关配置-->
+     <bean id="captchaProducer" class="com.google.code.kaptcha.impl.DefaultKaptcha">  
+         <property name="config">  
+             <bean class="com.google.code.kaptcha.util.Config">  
+                 <constructor-arg>  
+                     <props> 
+                         <!-- 是否有边框 可选yes 或者 no --> 
+                         <prop key="kaptcha.border">yes</prop>  
+                         <!-- 边框颜色 -->
+                         <prop key="kaptcha.border.color">105,179,90</prop>  
+                         <!-- 验证码文本字符颜色 -->
+                         <prop key="kaptcha.textproducer.font.color">blue</prop>  
+                         <!-- 验证码文本字符大小 -->
+                         <prop key="kaptcha.textproducer.font.size">45</prop>  
+                         <!-- 验证码图片的宽度 默认200 -->
+                         <prop key="kaptcha.image.width">125</prop>  
+                         <!-- 验证码图片的高度 默认50 -->
+                         <prop key="kaptcha.image.height">45</prop>  
+                         <!-- 验证码文本字符长度  默认为5 -->
+                         <prop key="kaptcha.textproducer.char.length">4</prop>  
+                         <!-- 验证码文本字体样式  默认为new Font("Arial", 1, fontSize), new Font("Courier", 1, fontSize)  -->
+                         <prop key="kaptcha.textproducer.font.names">宋体,楷体,微软雅黑</prop>  
+                     </props>  
+                 </constructor-arg>  
+             </bean>  
+         </property>  
+     </bean>
+</beans>

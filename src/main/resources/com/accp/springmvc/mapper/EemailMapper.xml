@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "mybatis-3-mapper" "mybatis-3-mapper.dtd" >
+<mapper namespace="com.accp.springmvc.mapper.EemailMapper">
+	<select id="queryRecieve" resultType="com.accp.springmvc.pojo.Eemail">
+		SELECT
+		e.*
+		FROM
+		`qq_email`.`erelation` re
+		INNER JOIN `eemail` e ON e.`esid`=re.`esid`
+		INNER JOIN `efolder` f ON f.`efid`=re.`efid`
+		WHERE f.`foldername`='收件箱'
+	</select>
+	<select id="queryEmailById" resultType="com.accp.springmvc.pojo.Eemail">
+		SELECT
+		e.*
+		FROM
+		`qq_email`.`erelation` re
+		INNER JOIN `eemail` e ON e.`esid`=re.`esid`
+		INNER JOIN `efolder` f ON f.`efid`=re.`efid`
+		WHERE e.`esid`=#{esid}
+	</select>
+	<select id="queryRecieveCount" resultType="Integer">
+		SELECT
+		COUNT(*)
+		FROM
+		`qq_email`.`erelation` rel
+		INNER JOIN `eemail` e ON e.`esid`=rel.`esid`
+		INNER JOIN `efolder` f ON f.`efid`=rel.`efid`
+		WHERE f.`foldername`='收件箱' AND rel.`receivercodeid`=#{uid}
+	</select>
+	<select id="queryReadEmailCount" resultType="Integer">
+		SELECT
+		COUNT(*)
+		FROM
+		`qq_email`.`erelation` rel
+		INNER JOIN `eemail` e ON e.`esid`=rel.`esid`
+		INNER JOIN `efolder` f ON f.`efid`=rel.`efid`
+		WHERE f.`foldername`='收件箱' AND rel.`receivercodeid`=#{uid}
+		and rel.`emailstatus`=1
+	</select>
+</mapper>
